@@ -42,6 +42,40 @@ export async function fetchPrayerDay(date: Date, q: TimingsQuery): Promise<Praye
   return parseTimings(json)
 }
 
+interface AladhanCalendarResponse {
+  code: number
+  status: string
+  data: AladhanTimingsResponse['data'][]
+}
+
+async function fetchMonth(year: number, month: number, q: TimingsQuery): Promise<PrayerDay[]> {
+  const params = new URLSearchParams({
+    latitude: q.latitude.toFixed(5),
+    longitude: q.longitude.toFixed(5),
+    method: String(q.method),
+    school: q.school === 'hanafi' ? '1' : '0',
+    iso8601: 'true',
+  })
+  const json = await getJson<AladhanCalendarResponse>(`${BASE}/calendar/${year}/${month}?${params}`)
+  if (json.code !== 200 || !Array.isArray(json.data)) throw new AladhanError(`Prayer time service error: ${json.status}`)
+  return json.data.map((d) => parseTimings({ code: 200, status: 'OK', data: d }))
+}
+
+/**
+ * Prayer times for `count` consecutive days starting at `from`, using one request per calendar month touched
+ * (usually one). Enough days to schedule a week of notifications in advance.
+ */
+export async function fetchPrayerDays(from: Date, count: number, q: TimingsQuery): Promise<PrayerDay[]> {
+  const last = new Date(from.getFullYear(), from.getMonth(), from.getDate() + count - 1)
+  const months = [{ year: from.getFullYear(), month: from.getMonth() + 1 }]
+  if (last.getMonth() !== from.getMonth() || last.getFullYear() !== from.getFullYear())
+    months.push({ year: last.getFullYear(), month: last.getMonth() + 1 })
+
+  const all = (await Promise.all(months.map((m) => fetchMonth(m.year, m.month, q)))).flat()
+  const start = aladhanDate(from).split('-').reverse().join('-') // DD-MM-YYYY → YYYY-MM-DD
+  return all.filter((d) => d.date >= start).slice(0, count)
+}
+
 export interface RamadanDay {
   /** 1-based day of Ramadan. */
   day: number
