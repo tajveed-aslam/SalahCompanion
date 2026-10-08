@@ -24,6 +24,9 @@ the portfolio live demo; Expo Go QR / EAS APK for phones.
 - Nothing mid-edit.
 
 ## Next steps
+_Owner decision 2026-10-08: APK (EAS) and running the Appium suite are **on hold**; finish with the Vercel web demo
++ Expo Go for now. Don't start JDK/Android SDK installs unless the owner asks._
+
 1. Owner deploys the web build on Vercel (import repo; no env vars), then add the live URL to README + portfolio.
 2. With the owner's free Expo account: `npx eas-cli build -p android --profile preview` → APK link + QR on the portfolio.
 3. Run the Appium suite on a USB-connected Android phone (install JDK 17 + platform-tools, see `e2e/README.md`).
