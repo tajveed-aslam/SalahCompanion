@@ -35,5 +35,9 @@ the portfolio live demo; Expo Go QR / EAS APK for phones.
 - Web can't reverse-geocode, so the place is labelled "Near <time-zone city>".
 - Desktop browsers (no touch points) are treated as having no compass up front; notifications are hidden on web.
 - Ramadan streak: trailing unmarked days don't break it; a missed day or an unmarked gap does.
+- **Never `import ... from 'expo-notifications'`** (the entry point). It loads `DevicePushTokenAutoRegistration.fx`,
+  which throws on startup in Expo Go on Android (SDK 53+ removed remote push from Expo Go). `src/lib/notifications.ts`
+  imports the local-notification modules from `expo-notifications/build/...` instead; local notifications still
+  work in Expo Go. Verified by grepping the exported Android bundle for the error string.
 - e2e is a separate npm package (its own package.json/tsconfig) so Appium stays out of the app's dependencies.
   UiAutomator2 selectors use `resourceId("<testID>")`.

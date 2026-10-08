@@ -1,6 +1,27 @@
-import * as Notifications from 'expo-notifications'
+// Import the local-notification pieces directly instead of the 'expo-notifications' entry point. The entry point
+// loads a module that registers a push-token listener on startup, and in Expo Go on Android (SDK 53+) that
+// *throws* ("push notifications were removed from Expo Go … use a development build"), crashing the app before it
+// renders. This app only schedules local notifications, which Expo Go still supports, so it never needs that module.
+import { cancelAllScheduledNotificationsAsync } from 'expo-notifications/build/cancelAllScheduledNotificationsAsync'
+import { AndroidImportance } from 'expo-notifications/build/NotificationChannelManager.types'
+import { getPermissionsAsync, requestPermissionsAsync } from 'expo-notifications/build/NotificationPermissions'
+import { SchedulableTriggerInputTypes } from 'expo-notifications/build/Notifications.types'
+import { setNotificationHandler } from 'expo-notifications/build/NotificationsHandler'
+import { scheduleNotificationAsync } from 'expo-notifications/build/scheduleNotificationAsync'
+import { setNotificationChannelAsync } from 'expo-notifications/build/setNotificationChannelAsync'
 import { Platform } from 'react-native'
 import type { PrayerDay, PrayerName } from './prayerTimes'
+
+const Notifications = {
+  AndroidImportance,
+  SchedulableTriggerInputTypes,
+  cancelAllScheduledNotificationsAsync,
+  getPermissionsAsync,
+  requestPermissionsAsync,
+  scheduleNotificationAsync,
+  setNotificationChannelAsync,
+  setNotificationHandler,
+}
 
 /** Local notifications work on Android and iOS (including Expo Go); browsers aren't supported by expo-notifications. */
 export const notificationsSupported = Platform.OS !== 'web'
