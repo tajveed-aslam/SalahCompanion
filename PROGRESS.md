@@ -14,6 +14,9 @@ the portfolio live demo; Expo Go QR / EAS APK for phones.
 - Logic in `src/lib/` with 41 Jest tests (`npm test`); typecheck, `expo lint`, `expo-doctor` all clean.
 - Appium suite (WebdriverIO 10 + Appium 3 UiAutomator2) in `e2e/`, 5 specs, typechecks. **Not yet run**: this PC has
   no JDK / Android SDK / adb and CPU virtualisation is off (no emulator).
+- **Verified by the owner on an Android phone in Expo Go (2026-10-08):** app runs, notifications toggle schedules
+  reminders and the test notification arrives (via Expo's default channel; our "Prayer times" channel only exists
+  in a real build).
 - Web export verified in Edge with Playwright (granted/denied location, London/Karachi/Jeddah, dark mode).
 - `vercel.json` (expo export → dist) and `eas.json` (preview profile builds an APK).
 
@@ -39,5 +42,8 @@ the portfolio live demo; Expo Go QR / EAS APK for phones.
   which throws on startup in Expo Go on Android (SDK 53+ removed remote push from Expo Go). `src/lib/notifications.ts`
   imports the local-notification modules from `expo-notifications/build/...` instead; local notifications still
   work in Expo Go. Verified by grepping the exported Android bundle for the error string.
+- Expo Go on Android also lacks the notification channel manager (`setNotificationChannelAsync` rejects with a
+  NullPointerException). `ensureChannel()` tolerates that and triggers omit `channelId`, falling back to Expo's
+  default channel. All notification calls are caught and shown as a message in Settings, never thrown.
 - e2e is a separate npm package (its own package.json/tsconfig) so Appium stays out of the app's dependencies.
   UiAutomator2 selectors use `resourceId("<testID>")`.
