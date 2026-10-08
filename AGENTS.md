@@ -25,9 +25,15 @@ Run lint and typecheck before declaring any task done.
 
 ## Navigation & Routing
 
-- Use **Expo Router** for all navigation. Routes live in `src/app/` — every file there is a screen, `_layout.tsx` files define navigators. Keep non-route code (components, hooks, utils) outside `src/app/`.
-- Import `Link`, `router`, and `useLocalSearchParams` from `expo-router`.
-- Docs: https://docs.expo.dev/router/introduction.md
+- **This project uses React Navigation (bottom tabs), by the owner's spec** — do not migrate it to Expo Router.
+  Navigators are set up in `App.tsx`; screens live in `src/screens/`.
+- Docs: https://reactnavigation.org/docs/getting-started
+
+## Testing
+
+- Pure logic (`src/lib/`): Jest (`npm test`).
+- UI/E2E: **Appium** (WebdriverIO + TypeScript) in `e2e/` — owner's standing instruction. Every interactive element
+  has a stable `testID`; keep them when changing UI.
 
 ## Building with EAS
 
