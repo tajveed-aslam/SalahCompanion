@@ -3,6 +3,8 @@
 A React Native (Expo, TypeScript) prayer companion: accurate prayer times for where you are, a Qibla compass,
 a Ramadan fasting tracker and prayer-time notifications. Runs on Android, iOS and the web.
 
+**Live demo (web): https://salahcompanion.vercel.app/** — open it on a phone for the live compass.
+
 | | |
 |---|---|
 | **Prayer times** | GPS location → [AlAdhan API](https://aladhan.com/prayer-times-api). Next prayer with a live countdown, today/tomorrow, Gregorian + Hijri date, times shown in the location's own time zone. Calculation method and Asr school chosen automatically by region (Karachi/Hanafi in South Asia, Umm Al-Qura in Saudi Arabia, ISNA in North America, MWL elsewhere …) or set by hand. Works offline from the last successful fetch. |

@@ -17,6 +17,8 @@ the portfolio live demo; Expo Go QR / EAS APK for phones.
 - **Verified by the owner on an Android phone in Expo Go (2026-10-08):** app runs, notifications toggle schedules
   reminders and the test notification arrives (via Expo's default channel; our "Prayer times" channel only exists
   in a real build).
+- **Live on Vercel: https://salahcompanion.vercel.app/** (auto-deploys from `main`; from now on push WIP to a
+  branch). Playwright checks pass against the live site; portfolio entry has the live link.
 - Web export verified in Edge with Playwright (granted/denied location, London/Karachi/Jeddah, dark mode).
 - `vercel.json` (expo export → dist) and `eas.json` (preview profile builds an APK).
 
@@ -27,10 +29,8 @@ the portfolio live demo; Expo Go QR / EAS APK for phones.
 _Owner decision 2026-10-08: APK (EAS) and running the Appium suite are **on hold**; finish with the Vercel web demo
 + Expo Go for now. Don't start JDK/Android SDK installs unless the owner asks._
 
-1. Owner deploys the web build on Vercel (import repo; no env vars), then add the live URL to README + portfolio.
-2. With the owner's free Expo account: `npx eas-cli build -p android --profile preview` → APK link + QR on the portfolio.
-3. Run the Appium suite on a USB-connected Android phone (install JDK 17 + platform-tools, see `e2e/README.md`).
-4. Portfolio entry (phone-frame screenshots) — added in `tajveed-portfolio/lib/projects.ts`; swap in the live URL.
+1. (On hold) With the owner's free Expo account: `npx eas-cli build -p android --profile preview` → APK link + QR on the portfolio.
+2. (On hold) Run the Appium suite on a USB-connected Android phone (install JDK 17 + platform-tools, see `e2e/README.md`).
 
 ## Decisions & gotchas
 - React Navigation (owner's spec), **not** Expo Router — the template AGENTS.md was edited to say so.
