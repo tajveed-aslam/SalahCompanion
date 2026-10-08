@@ -18,7 +18,12 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION", "POST_NOTIFICATIONS", "VIBRATE"],
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "POST_NOTIFICATIONS",
+        "VIBRATE"
+      ],
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -40,7 +45,8 @@
           "motionPermission": "SalahCompanion uses the compass to point you towards the Qibla."
         }
       ],
-      "expo-notifications"
+      "expo-notifications",
+      "expo-font"
     ]
   }
 }

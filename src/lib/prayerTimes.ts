@@ -107,9 +107,22 @@ export function formatCountdown(ms: number): string {
   return `${s}s`
 }
 
-/** Local wall-clock time, e.g. "05:12". */
-export function formatTime(date: Date): string {
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+/**
+ * Wall-clock time, e.g. "05:12", in the prayer location's time zone when given (so a location chosen far from the
+ * device, like the sample city, still shows its own local times). Falls back to device time if the zone is unknown.
+ */
+export function formatTime(date: Date, timeZone?: string): string {
+  try {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone })
+  } catch {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  }
+}
+
+/** "Europe/London" → "London", "America/Argentina/Buenos_Aires" → "Buenos Aires". */
+export function timeZoneCity(timeZone: string | undefined): string | null {
+  const city = timeZone?.split('/').pop()?.replace(/_/g, ' ')
+  return city && city !== 'UTC' ? city : null
 }
 
 /** DD-MM-YYYY, the format AlAdhan's path parameter expects. */

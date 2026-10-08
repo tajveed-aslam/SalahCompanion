@@ -7,14 +7,15 @@ export interface FastStats {
   fasted: number
   /** Missed fasts still to be made up (qada). */
   missed: number
-  /** Consecutive fasted days ending at the most recent day so far. */
+  /** Consecutive fasted days ending at the most recently marked day. */
   currentStreak: number
   bestStreak: number
 }
 
 /**
  * Stats for one Ramadan. `upToDay` is the last day that can be counted (today's day of Ramadan, or the month's
- * length once it's over). Today being still unmarked doesn't break the streak; a missed or skipped earlier day does.
+ * length once it's over). Trailing unmarked days (today, or days not filled in yet) don't break the current streak;
+ * a missed day, or an unmarked gap between marked days, does.
  */
 export function fastStats(record: FastRecord, totalDays: number, upToDay: number): FastStats {
   const last = Math.min(Math.max(upToDay, 0), totalDays)
@@ -36,7 +37,7 @@ export function fastStats(record: FastRecord, totalDays: number, upToDay: number
 
   let current = 0
   let day = last
-  if (day >= 1 && record[day] === undefined) day-- // today not marked yet
+  while (day >= 1 && record[day] === undefined) day-- // not filled in yet
   while (day >= 1 && record[day] === 'fasted') {
     current++
     day--

@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { DarkTheme, DefaultTheme, NavigationContainer, type Theme as NavTheme } from '@react-navigation/native'
 import { StatusBar } from 'expo-status-bar'
-import { useColorScheme } from 'react-native'
+import { Platform, useColorScheme } from 'react-native'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { AppDataProvider } from './src/AppData'
 import { PrayerTimesScreen } from './src/screens/PrayerTimesScreen'
@@ -46,6 +46,8 @@ function Tabs() {
           tabBarActiveTintColor: t.primary,
           tabBarInactiveTintColor: t.muted,
           tabBarButtonTestID: `tab-${route.name.toLowerCase()}`,
+          // The default 49pt bar clips the labels in mobile browsers.
+          ...(Platform.OS === 'web' && { tabBarStyle: { height: 62, paddingTop: 4, paddingBottom: 8 } }),
           tabBarIcon: ({ focused, color, size }) => (
             <Ionicons name={ICONS[route.name][focused ? 0 : 1]} size={size} color={color} />
           ),

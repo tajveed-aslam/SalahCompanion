@@ -37,6 +37,10 @@ function smoothAngle(previous: number | null, next: number, alpha = 0.25): numbe
 type IOSOrientationEvent = DeviceOrientationEvent & { webkitCompassHeading?: number }
 type OrientationCtor = typeof DeviceOrientationEvent & { requestPermission?: () => Promise<'granted' | 'denied'> }
 
+const webWithoutCompass =
+  Platform.OS === 'web' &&
+  (typeof window === 'undefined' || !('DeviceOrientationEvent' in window) || (navigator.maxTouchPoints ?? 0) === 0)
+
 /**
  * Device compass heading. Native: the OS heading API (magnetometer fused with the accelerometer, tilt-compensated,
  * true north), falling back to the raw magnetometer. Web: the browser's absolute device-orientation events, which
@@ -47,12 +51,12 @@ export function useHeading(): HeadingState {
   const [source, setSource] = useState<HeadingSource | null>(null)
   const [trueNorth, setTrueNorth] = useState(false)
   const [accuracy, setAccuracy] = useState<number | null>(null)
-  // Browsers without the orientation API at all (rare) are known to be unsupported up front.
-  const [unsupported, setUnsupported] = useState(
-    Platform.OS === 'web' && (typeof window === 'undefined' || !('DeviceOrientationEvent' in window)),
-  )
+  // Known up front on web: no orientation API, or a desktop (no touch screen) that has the API but no compass.
+  const [unsupported, setUnsupported] = useState(webWithoutCompass)
   const [needsPermission, setNeedsPermission] = useState(
-    Platform.OS === 'web' && typeof (globalThis as { DeviceOrientationEvent?: OrientationCtor }).DeviceOrientationEvent?.requestPermission === 'function',
+    Platform.OS === 'web' &&
+      !webWithoutCompass &&
+      typeof (globalThis as { DeviceOrientationEvent?: OrientationCtor }).DeviceOrientationEvent?.requestPermission === 'function',
   )
   const [permissionTick, setPermissionTick] = useState(0)
   const smoothed = useRef<number | null>(null)
@@ -102,8 +106,7 @@ export function useHeading(): HeadingState {
 
   // ----- Web -----
   useEffect(() => {
-    if (Platform.OS !== 'web' || needsPermission) return
-    if (typeof window === 'undefined' || !('DeviceOrientationEvent' in window)) return
+    if (Platform.OS !== 'web' || needsPermission || webWithoutCompass) return
 
     let gotReading = false
     const onAbsolute = (e: DeviceOrientationEvent) => {

@@ -6,7 +6,7 @@ import { LocationGate } from '../components/LocationGate'
 import { Button, Card, Loading, Muted, Notice, Screen, Title } from '../components/ui'
 import { useNow } from '../hooks/useNow'
 import { methodName } from '../lib/methods'
-import { formatCountdown, formatTime, nextPrayer, type PrayerDay } from '../lib/prayerTimes'
+import { formatCountdown, formatTime, nextPrayer, timeZoneCity, type PrayerDay } from '../lib/prayerTimes'
 import { radius, space, useTheme } from '../theme'
 
 const ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
@@ -37,7 +37,10 @@ function TimesContent() {
   const [dayIndex, setDayIndex] = useState(0)
 
   if (!place) return null
-  const placeLabel = place.name ?? `${place.latitude.toFixed(3)}°, ${place.longitude.toFixed(3)}°`
+  const coords = `${place.latitude.toFixed(3)}°, ${place.longitude.toFixed(3)}°`
+  // Browsers can't reverse-geocode, so name the place after its time zone's city ("Near London") instead.
+  const zoneCity = timeZoneCity(days?.[0]?.timezone)
+  const placeLabel = place.name ?? (zoneCity ? `Near ${zoneCity} · ${coords}` : coords)
 
   const header = (
     <View style={{ gap: 2 }}>
@@ -86,7 +89,7 @@ function TimesContent() {
         <View testID="next-prayer" style={[styles.hero, { backgroundColor: t.primary }]}>
           <Text style={[styles.heroLabel, { color: t.primaryText }]}>Next prayer</Text>
           <Text testID="next-prayer-name" style={[styles.heroName, { color: t.primaryText }]}>{next.name}</Text>
-          <Text style={{ color: t.primaryText, fontSize: 16, opacity: 0.9 }}>at {formatTime(next.time)}</Text>
+          <Text style={{ color: t.primaryText, fontSize: 16, opacity: 0.9 }}>at {formatTime(next.time, today.timezone)}</Text>
           <Text testID="next-prayer-countdown" style={[styles.countdown, { color: t.primaryText }]}>
             in {formatCountdown(next.msUntil)}
           </Text>
@@ -129,7 +132,7 @@ function TimesContent() {
                 <Text style={[styles.timeName, { color: passed ? t.muted : t.text }]}>{p.name}</Text>
                 {isCurrent && <Badge label="Now" />}
                 {isNext && <Badge label="Next" outline />}
-                <Text style={[styles.timeValue, { color: passed ? t.muted : t.text }]}>{formatTime(p.time)}</Text>
+                <Text style={[styles.timeValue, { color: passed ? t.muted : t.text }]}>{formatTime(p.time, day.timezone)}</Text>
               </View>
             )
           })}
@@ -140,7 +143,7 @@ function TimesContent() {
         {method ? `${methodName(method.method)} · Asr ${method.school === 'hanafi' ? 'Hanafi' : 'Standard'}` : day.methodName}
         {method?.auto ? ' (auto for your region, change in Settings)' : ''}
       </Muted>
-      <Muted style={{ fontSize: 12 }}>Times from the AlAdhan API, shown in your device&apos;s time zone.</Muted>
+      <Muted style={{ fontSize: 12 }}>Times from the AlAdhan API, in local time for {placeLabel.replace(/ · .*/, '')} ({today.timezone}).</Muted>
     </>
   )
 }
