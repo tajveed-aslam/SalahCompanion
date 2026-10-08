@@ -62,7 +62,7 @@ export function useLocation() {
     }
   }, [])
 
-  const useSample = useCallback(() => {
+  const chooseSample = useCallback(() => {
     setPlace(SAMPLE_PLACE)
     setStatus('ready')
     setError(null)
@@ -85,5 +85,5 @@ export function useLocation() {
     }
   }, [locate])
 
-  return { place, status, error, locate, useSample }
+  return { place, status, error, locate, chooseSample }
 }

@@ -1,5 +1,5 @@
 import type { AsrSchool } from './methods'
-import { aladhanDate, parseTimings, type AladhanTimingsResponse, type PrayerDay } from './prayerTimes'
+import { aladhanDate, parseTimings, type AladhanTimingsResponse, type HijriDate, type PrayerDay } from './prayerTimes'
 
 const BASE = 'https://api.aladhan.com/v1'
 const TIMEOUT_MS = 15000
@@ -74,6 +74,19 @@ export async function fetchPrayerDays(from: Date, count: number, q: TimingsQuery
   const all = (await Promise.all(months.map((m) => fetchMonth(m.year, m.month, q)))).flat()
   const start = aladhanDate(from).split('-').reverse().join('-') // DD-MM-YYYY → YYYY-MM-DD
   return all.filter((d) => d.date >= start).slice(0, count)
+}
+
+interface GToHResponse {
+  code: number
+  data: { hijri: { day: string; year: string; month: { number: number; en: string; ar: string } } }
+}
+
+/** Today's Hijri date (no location needed). */
+export async function fetchHijriDate(date: Date): Promise<HijriDate> {
+  const json = await getJson<GToHResponse>(`${BASE}/gToH/${aladhanDate(date)}`)
+  if (json.code !== 200) throw new AladhanError('Could not load the Hijri date.')
+  const h = json.data.hijri
+  return { day: Number(h.day), month: h.month.number, monthName: h.month.en, monthNameAr: h.month.ar, year: Number(h.year) }
 }
 
 export interface RamadanDay {
