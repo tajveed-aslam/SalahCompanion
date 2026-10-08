@@ -22,4 +22,6 @@ export const KEYS = {
   settings: 'salah.settings.v1',
   lastTimes: 'salah.lastTimes.v1',
   ramadan: (hijriYear: number) => `salah.ramadan.${hijriYear}`,
+  ramadanCalendar: (hijriYear: number) => `salah.ramadanCalendar.${hijriYear}`,
+  hijriToday: 'salah.hijriToday.v1',
 }

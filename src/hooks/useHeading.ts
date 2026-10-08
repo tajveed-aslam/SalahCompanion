@@ -47,7 +47,10 @@ export function useHeading(): HeadingState {
   const [source, setSource] = useState<HeadingSource | null>(null)
   const [trueNorth, setTrueNorth] = useState(false)
   const [accuracy, setAccuracy] = useState<number | null>(null)
-  const [unsupported, setUnsupported] = useState(false)
+  // Browsers without the orientation API at all (rare) are known to be unsupported up front.
+  const [unsupported, setUnsupported] = useState(
+    Platform.OS === 'web' && (typeof window === 'undefined' || !('DeviceOrientationEvent' in window)),
+  )
   const [needsPermission, setNeedsPermission] = useState(
     Platform.OS === 'web' && typeof (globalThis as { DeviceOrientationEvent?: OrientationCtor }).DeviceOrientationEvent?.requestPermission === 'function',
   )
@@ -100,10 +103,7 @@ export function useHeading(): HeadingState {
   // ----- Web -----
   useEffect(() => {
     if (Platform.OS !== 'web' || needsPermission) return
-    if (typeof window === 'undefined' || !('DeviceOrientationEvent' in window)) {
-      setUnsupported(true)
-      return
-    }
+    if (typeof window === 'undefined' || !('DeviceOrientationEvent' in window)) return
 
     let gotReading = false
     const onAbsolute = (e: DeviceOrientationEvent) => {

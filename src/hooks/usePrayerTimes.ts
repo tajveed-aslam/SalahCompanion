@@ -43,19 +43,21 @@ function revive(cached: Cached): PrayerDay[] {
  */
 export function usePrayerTimes(place: Place | null, settings: Settings, settingsLoaded: boolean) {
   const [days, setDays] = useState<PrayerDay[] | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [offlineSince, setOfflineSince] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
+  // Loading and error are derived from which request last finished, so nothing is reset synchronously in the effect.
+  const [finished, setFinished] = useState<{ id: string; error: string | null } | null>(null)
 
   const method = place ? resolveMethod(settings, place) : null
   const key = place && method ? cacheKey(place, method) : null
+  const requestId = key && settingsLoaded ? `${key}#${reloadKey}` : null
+  const loading = requestId !== null && finished?.id !== requestId
+  const error = finished && finished.id === requestId ? finished.error : null
 
   useEffect(() => {
-    if (!place || !method || !key || !settingsLoaded) return
+    if (!place || !method || !key || !requestId) return
     let active = true
-    setLoading(true)
-    setError(null)
+    let failure: string | null = null
 
     fetchPrayerDays(new Date(), DAYS_AHEAD, { latitude: place.latitude, longitude: place.longitude, ...method })
       .then((fresh) => {
@@ -75,17 +77,17 @@ export function usePrayerTimes(place: Place | null, settings: Settings, settings
           setDays(revive(cached))
           setOfflineSince(cached.fetchedAt)
         } else {
-          setError(e instanceof AladhanError ? e.message : 'Could not load prayer times.')
+          failure = e instanceof AladhanError ? e.message : 'Could not load prayer times.'
         }
       })
-      .finally(() => active && setLoading(false))
+      .finally(() => active && setFinished({ id: requestId, error: failure }))
 
     return () => {
       active = false
     }
-    // `method` is derived from key's inputs; key changes whenever it matters.
+    // `place` and `method` are folded into requestId (via key); it changes whenever they matter.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, settingsLoaded, reloadKey])
+  }, [requestId])
 
   const refresh = useCallback(() => setReloadKey((k) => k + 1), [])
   return { days, loading, error, offlineSince, method, refresh }

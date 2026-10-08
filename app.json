@@ -5,21 +5,42 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tajveedaslam.salahcompanion"
     },
     "android": {
+      "package": "com.tajveedaslam.salahcompanion",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
+      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION", "POST_NOTIFICATIONS", "VIBRATE"],
       "predictiveBackGestureEnabled": false
     },
     "web": {
+      "name": "SalahCompanion",
+      "shortName": "Salah",
+      "themeColor": "#0f766e",
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "SalahCompanion uses your location to calculate prayer times and the Qibla direction."
+        }
+      ],
+      [
+        "expo-sensors",
+        {
+          "motionPermission": "SalahCompanion uses the compass to point you towards the Qibla."
+        }
+      ],
+      "expo-notifications"
+    ]
   }
 }
