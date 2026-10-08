@@ -4,7 +4,7 @@ import { Linking, Pressable, StyleSheet, Switch, Text, View } from 'react-native
 import { useAppData } from '../AppData'
 import { Button, Card, Muted, Notice, Screen, Title } from '../components/ui'
 import { autoMethod, METHODS, methodName, type AsrSchool } from '../lib/methods'
-import { ensureNotificationPermission, notificationsSupported, sendTestNotification } from '../lib/notifications'
+import { ensureNotificationPermission, notificationErrorMessage, notificationsSupported, sendTestNotification } from '../lib/notifications'
 import { PRAYERS } from '../lib/prayerTimes'
 import { useSettings } from '../settings'
 import { space, useTheme } from '../theme'
@@ -27,23 +27,35 @@ export function SettingsScreen() {
 function NotificationSettings() {
   const t = useTheme()
   const { settings, update } = useSettings()
-  const { scheduledCount } = useAppData()
+  const { scheduledCount, notificationError } = useAppData()
   const [denied, setDenied] = useState(false)
   const [testSent, setTestSent] = useState(false)
+  const [setupError, setSetupError] = useState<string | null>(null)
+  const error = setupError ?? (settings.notificationsEnabled ? notificationError : null)
 
   const toggle = async (on: boolean) => {
+    setSetupError(null)
     if (!on) {
       update({ notificationsEnabled: false })
       return
     }
-    const granted = await ensureNotificationPermission()
-    setDenied(!granted)
-    if (granted) update({ notificationsEnabled: true })
+    try {
+      const granted = await ensureNotificationPermission()
+      setDenied(!granted)
+      if (granted) update({ notificationsEnabled: true })
+    } catch {
+      setSetupError(notificationErrorMessage())
+    }
   }
 
   const sendTest = async () => {
-    await sendTestNotification()
-    setTestSent(true)
+    setSetupError(null)
+    try {
+      await sendTestNotification()
+      setTestSent(true)
+    } catch {
+      setSetupError(notificationErrorMessage())
+    }
   }
 
   return (
@@ -72,6 +84,11 @@ function NotificationSettings() {
               </Notice>
               <Button label="Open settings" variant="ghost" onPress={() => void Linking.openSettings()} testID="open-system-settings" />
             </View>
+          )}
+          {error && (
+            <Notice tone="error" testID="notifications-error">
+              {error}
+            </Notice>
           )}
           {settings.notificationsEnabled && (
             <>

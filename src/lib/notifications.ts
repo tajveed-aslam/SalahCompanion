@@ -9,6 +9,7 @@ import { SchedulableTriggerInputTypes } from 'expo-notifications/build/Notificat
 import { setNotificationHandler } from 'expo-notifications/build/NotificationsHandler'
 import { scheduleNotificationAsync } from 'expo-notifications/build/scheduleNotificationAsync'
 import { setNotificationChannelAsync } from 'expo-notifications/build/setNotificationChannelAsync'
+import { isRunningInExpoGo } from 'expo'
 import { Platform } from 'react-native'
 import type { PrayerDay, PrayerName } from './prayerTimes'
 
@@ -28,6 +29,39 @@ export const notificationsSupported = Platform.OS !== 'web'
 
 const CHANNEL_ID = 'prayer-times'
 let configured = false
+/** Whether our "Prayer times" Android channel exists; until then notifications use Expo's default channel. */
+let channelReady = false
+
+/** Expo Go on Android ships without parts of the native notification stack; a real build has all of it. */
+const limitedExpoGo = Platform.OS === 'android' && isRunningInExpoGo()
+
+/** A message for the user when a notification call fails. */
+export function notificationErrorMessage(): string {
+  return limitedExpoGo
+    ? "Expo Go on Android can't schedule this app's notifications. Install the Android build (APK) to get prayer alerts."
+    : "Couldn't set up notifications on this device. Check that notifications are allowed for SalahCompanion."
+}
+
+/**
+ * Creates the high-importance "Prayer times" channel. Expo Go on Android doesn't include the channel manager
+ * (the call rejects with a NullPointerException), so a failure is tolerated: notifications then go to Expo's
+ * default channel instead.
+ */
+async function ensureChannel(): Promise<void> {
+  if (Platform.OS !== 'android' || channelReady) return
+  try {
+    await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
+      name: 'Prayer times',
+      importance: Notifications.AndroidImportance.HIGH,
+      vibrationPattern: [0, 250, 250, 250],
+    })
+    channelReady = true
+  } catch {
+    channelReady = false
+  }
+}
+
+const channel = () => (channelReady ? { channelId: CHANNEL_ID } : {})
 
 /** Show prayer alerts even while the app is open. Call once at startup. */
 export function configureNotifications(): void {
@@ -43,16 +77,13 @@ export function configureNotifications(): void {
   configured = true
 }
 
-/** Creates the Android channel (needed before the permission prompt can appear) and asks for permission. */
+/**
+ * Creates the Android channel (on Android 13+ the permission prompt only appears once a channel exists) and asks
+ * for permission. Throws when the device can't do notifications at all; see notificationErrorMessage.
+ */
 export async function ensureNotificationPermission(): Promise<boolean> {
   if (!notificationsSupported) return false
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
-      name: 'Prayer times',
-      importance: Notifications.AndroidImportance.HIGH,
-      vibrationPattern: [0, 250, 250, 250],
-    })
-  }
+  await ensureChannel()
   const existing = await Notifications.getPermissionsAsync()
   if (existing.granted) return true
   const requested = await Notifications.requestPermissionsAsync({
@@ -73,6 +104,7 @@ export async function schedulePrayerNotifications(
   now: Date = new Date(),
 ): Promise<number> {
   if (!notificationsSupported) return 0
+  await ensureChannel()
   await Notifications.cancelAllScheduledNotificationsAsync()
 
   let count = 0
@@ -86,7 +118,7 @@ export async function schedulePrayerNotifications(
           sound: 'default',
           data: { prayer: name },
         },
-        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: time, channelId: CHANNEL_ID },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: time, ...channel() },
       })
       count++
     }
@@ -101,8 +133,9 @@ export async function cancelPrayerNotifications(): Promise<void> {
 /** Fires a sample reminder in 5 seconds so users can check notifications work on their device. */
 export async function sendTestNotification(): Promise<void> {
   if (!notificationsSupported) return
+  await ensureChannel()
   await Notifications.scheduleNotificationAsync({
     content: { title: 'SalahCompanion', body: 'Prayer reminders are working.', sound: 'default' },
-    trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 5, channelId: CHANNEL_ID },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 5, ...channel() },
   })
 }

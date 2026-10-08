@@ -4,6 +4,7 @@ import { usePrayerTimes, type ResolvedMethod } from './hooks/usePrayerTimes'
 import {
   cancelPrayerNotifications,
   configureNotifications,
+  notificationErrorMessage,
   notificationsSupported,
   schedulePrayerNotifications,
 } from './lib/notifications'
@@ -24,6 +25,8 @@ interface AppDataValue {
   refreshTimes: () => void
   /** Reminders currently queued on the device (native only). */
   scheduledCount: number
+  /** Why reminders couldn't be scheduled, if they couldn't. */
+  notificationError: string | null
 }
 
 const AppDataContext = createContext<AppDataValue | null>(null)
@@ -34,6 +37,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const location = useLocation()
   const times = usePrayerTimes(location.place, settings, loaded)
   const [scheduledCount, setScheduledCount] = useState(0)
+  const [notificationError, setNotificationError] = useState<string | null>(null)
 
   useEffect(() => configureNotifications(), [])
 
@@ -45,7 +49,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     const job = settings.notificationsEnabled && days
       ? schedulePrayerNotifications(days, settings.notify, location.place?.name ?? '')
       : cancelPrayerNotifications().then(() => 0)
-    job.then((count) => active && setScheduledCount(count)).catch(() => active && setScheduledCount(0))
+    job
+      .then((count) => {
+        if (!active) return
+        setScheduledCount(count)
+        setNotificationError(null)
+      })
+      .catch(() => {
+        if (!active) return
+        setScheduledCount(0)
+        setNotificationError(notificationErrorMessage())
+      })
     return () => {
       active = false
     }
@@ -64,6 +78,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     method: times.method,
     refreshTimes: times.refresh,
     scheduledCount,
+    notificationError,
   }
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>
 }
